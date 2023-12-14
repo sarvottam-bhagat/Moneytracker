@@ -1,0 +1,146 @@
+html part
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
+    <title>Money Tracker App</title>
+</head>
+<body>
+    <header>
+        <h1>Money Tracker</h1>
+    </header>
+
+    <main id="transactions">
+        <!-- Transactions will be displayed here -->
+    </main>
+
+    <section id="form-section">
+        <h2>Add Transaction</h2>
+        <form id="transactionForm">
+            <label for="type">Type:</label>
+            <select id="type" name="type" required>
+                <option value="income">Income</option>
+                <option value="expense">Expense</option>
+            </select>
+
+            <label for="description">Description:</label>
+            <input type="text" id="description" name="description" required>
+
+            <label for="amount">Amount:</label>
+            <input type="number" id="amount" name="amount" required>
+
+            <button type="submit">Add Transaction</button>
+        </form>
+    </section>
+
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+    <script src="index.js"></script>
+</body>
+</html>
+
+css part
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+}
+
+header {
+    background-color: #3498db;
+    color: #fff;
+    padding: 20px;
+    text-align: center;
+}
+
+main {
+    padding: 20px;
+}
+
+section {
+    background-color: #f4f4f4;
+    padding: 20px;
+    margin-top: 20px;
+}
+
+label {
+    display: block;
+    margin-bottom: 8px;
+}
+
+input, select {
+    width: 100%;
+    padding: 8px;
+    margin-bottom: 16px;
+}
+
+button {
+    padding: 10px;
+    background-color: #3498db;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+javascript part
+const express = require('express');
+const mongoose = require('mongoose');
+const bodyParser = require('body-parser');
+
+const app = express();
+const PORT = 3000;
+
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(express.static('public'));
+
+mongoose.connect('mongodb://localhost/money-tracker-app', { useNewUrlParser: true, useUnifiedTopology: true });
+
+const transactionSchema = new mongoose.Schema({
+    type: String,
+    description: String,
+    amount: Number,
+    date: {
+        type: Date,
+        default: Date.now
+    }
+});
+
+const Transaction = mongoose.model('Transaction', transactionSchema);
+
+// Display all transactions
+app.get('/', (req, res) => {
+    Transaction.find({}, (err, transactions) => {
+        if (err) {
+            console.error(err);
+            res.send('Error fetching transactions');
+        } else {
+            res.send(transactions);
+        }
+    });
+});
+
+// Add a new transaction
+app.post('/addTransaction', (req, res) => {
+    const { type, description, amount } = req.body;
+
+    const newTransaction = new Transaction({
+        type,
+        description,
+        amount
+    });
+
+    newTransaction.save((err) => {
+        if (err) {
+            console.error(err);
+            res.send('Error adding transaction');
+        } else {
+            res.redirect('/');
+        }
+    });
+});
+
+app.listen(PORT, () => {
+    console.log(`Server is running at http://localhost:${PORT}`);
+});
